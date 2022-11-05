@@ -1,0 +1,146 @@
+---
+title: "1. Perceptions of the Behavior that Led to Anger"
+author: "Pooya Razavi"
+date: "2022-11-05"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+#load libraries
+package_list <- c("dplyr", "tidyr", "lmerTest")
+lapply(package_list, require, character.only = TRUE)
+
+
+#read in the dataset
+df <- readxl::read_xlsx("preregistration_dataset.xlsx")
+
+#set up categorical variables
+df <- df %>% 
+          mutate(NarrativeWritten = as.factor(df$NarrativeWritten),
+                 NarrativeRelevant = as.factor(df$NarrativeRelevant),
+                 Condition = as.factor(df$Condition))
+
+#assigning values to factor levels
+  levels(df$NarrativeWritten) <- c("No", "Yes")
+
+  levels(df$NarrativeRelevant) <- c("No", "Yes", NA) 
+
+  levels(df$Condition) <- c("justified", "nonjustified", NA)
+
+#drop cases where condition = NA
+  df1 <- df %>% filter(!is.na(Condition))
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Harm and threat
+
+H(a) Justified anger events (compared to the unjustified ones) involve a stronger perception of harm and threat to the self and to others.
+
+H(b) The difference between justified and unjustified anger in terms of perceptions of harm or threat is moderated by the target of harm, such that this difference is larger for harm to others (vs. harm to self). 
+
+```{r}
+
+#create the dataframe
+harm_threat_df <- df1 %>% 
+                      select(ResponseId, Condition, harm_you, harm_others, threat_you, threat_others) %>% 
+                      mutate(harm.threat_self = ((harm_you + threat_you) / 2),
+                             harm.threat_other = ((harm_others + threat_others) / 2))
+
+#create a long dataframe
+harm_threat_df_long <- harm_threat_df %>% 
+                            tidyr::pivot_longer(cols = c(harm.threat_self, harm.threat_other),
+                                                names_to = "target",
+                                                names_prefix = "harm.threat_",
+                                                values_to = "harm")
+
+
+#the model: 
+#the main effect of type of anger (i.e., condition) corresponds to H(a)
+#the interaction effect corresponds to H(b)
+
+harm_threat_df_long %>% 
+  rstatix::anova_test(data = .,
+                      dv = harm,
+                      wid = ResponseId,
+                      between = Condition,
+                      within = target) %>% 
+  rstatix::get_anova_table()
+
+
+
+#difference between the two conditions in terms of harm to self
+t.test(harm.threat_self ~ Condition, data = harm_threat_df)
+effectsize::cohens_d(harm.threat_self ~ Condition, data = harm_threat_df)
+
+#difference between the two conditions in terms of harm to others
+t.test(harm.threat_other ~ Condition, data = harm_threat_df)
+effectsize::cohens_d(harm.threat_other ~ Condition, data = harm_threat_df)
+```
+
+
+# Fairness
+
+H: The target's behavior is perceived as less fair in the justified (vs. unjustified) anger condition.
+
+```{r}
+df1 <- df1 %>% 
+          mutate(fair_just = ((beh_fair + beh_justified) / 2))
+
+df1 %>% 
+    t.test(fair_just ~ Condition, data = .)
+
+df1 %>% 
+    effectsize::cohens_d(fair_just ~ Condition, data = .)
+
+```
+
+# Norm violations
+
+H(a): The target’s behavior during justified anger events (vs. unjustified ones) is judged as a stronger norm violation. 
+
+H(b): The difference between justified and unjustified anger events is moderated by the type of norm violation, such that this difference is larger for injunctive norms (compared to descriptive norms). 
+
+```{r}
+#create the dataframe
+norms_df <- df1 %>% 
+                      select(ResponseId, Condition, how_acceptable, how_common) %>% 
+                      mutate(injunctive = 6 - how_acceptable,
+                             descriptive = 6 - how_common)
+                      
+                      
+
+#create a long dataframe
+norms_df_long <- norms_df %>% 
+                            tidyr::pivot_longer(cols = c(injunctive, descriptive),
+                                                names_to = "norm_type",
+                                                values_to = "violation")
+
+
+#the model: 
+#the main effect of type of anger (i.e., condition) corresponds to H(a)
+#the interaction effect corresponds to H(b)
+
+norms_df_long %>% 
+  rstatix::anova_test(data = .,
+                      dv = violation,
+                      wid = ResponseId,
+                      between = Condition,
+                      within = norm_type) %>% 
+  rstatix::get_anova_table()
+
+
+
+#difference between the two conditions in terms of injunctive norms
+t.test(injunctive ~ Condition, data = norms_df)
+effectsize::cohens_d(injunctive ~ Condition, data = norms_df)
+
+#difference between the two conditions in terms of descriptive norms
+t.test(descriptive ~ Condition, data = norms_df)
+effectsize::cohens_d(descriptive ~ Condition, data = norms_df)
+
+```
+
