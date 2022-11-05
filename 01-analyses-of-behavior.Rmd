@@ -43,6 +43,12 @@ H(a) Justified anger events (compared to the unjustified ones) involve a stronge
 H(b) The difference between justified and unjustified anger in terms of perceptions of harm or threat is moderated by the target of harm, such that this difference is larger for harm to others (vs. harm to self). 
 
 ```{r}
+#first examine the correlation between the 2 items for threat/harm to self and 2 items for threat/harm to other. If r > .5, proceed with the following analyses. If not, conduct these analyses for each item separately.
+
+  cor.test(df1$harm_you, df1$threat_you) 
+  cor.test(df1$harm_others, df1$threat_others) 
+  
+#assuming items are strongly correlated (r > .5)
 
 #create the dataframe
 harm_threat_df <- df1 %>% 
@@ -87,6 +93,11 @@ effectsize::cohens_d(harm.threat_other ~ Condition, data = harm_threat_df)
 H: The target's behavior is perceived as less fair in the justified (vs. unjustified) anger condition.
 
 ```{r}
+#first examine the correlation between the 2 items. If r > .5, proceed with the following analyses. If not, conduct these analyses for each item separately.
+
+  cor.test(df1$beh_fair, df1$beh_justified) 
+
+#assuming items are strongly correlated (r > .5) 
 df1 <- df1 %>% 
           mutate(fair_just = ((beh_fair + beh_justified) / 2))
 
