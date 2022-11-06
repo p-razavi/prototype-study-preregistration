@@ -1,0 +1,221 @@
+---
+title: "03. Experiencer's Emotional Processes"
+author: "Pooya Razavi"
+date: "2022-11-06"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+#load libraries
+package_list <- c("dplyr", "tidyr", "lmerTest")
+lapply(package_list, require, character.only = TRUE)
+
+
+#read in the dataset
+df <- readxl::read_xlsx("preregistration_dataset.xlsx")
+
+#set up categorical variables
+df <- df %>% 
+          mutate(NarrativeWritten = as.factor(df$NarrativeWritten),
+                 NarrativeRelevant = as.factor(df$NarrativeRelevant),
+                 Condition = as.factor(df$Condition))
+
+#assigning values to factor levels
+  levels(df$NarrativeWritten) <- c("No", "Yes")
+
+  levels(df$NarrativeRelevant) <- c("No", "Yes", NA) 
+
+  levels(df$Condition) <- c("justified", "nonjustified", NA)
+
+#drop cases where condition = NA
+  df1 <- df %>% filter(!is.na(Condition))
+  
+  
+#Create a function to calculate percentages for each category of a Factor variable
+
+#Note: When calculating the percentage, the default is to include NAs in the denominator, which gives the percentage of the TOTAL sample for each category. To avoid this, set includeNA to FALSE.
+
+percentage <- function(var, includeNA = TRUE) {
+      tabb <- table(var) %>% as.data.frame()
+    
+          if (includeNA == TRUE) {
+               tabb$percentage <- (tabb$Freq * 100 / length(var))
+          } else {
+                tabb$percentage <- (tabb$Freq * 100 / sum(tabb$Freq))
+          }
+      
+      colnames(tabb)[1] <- c("category")
+      print(tabb)
+}
+  
+  
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Affective Experience
+
+To compare the broader affective experiences of participants across the justified and unjustified anger events, participants are asked to rate their emotional experience during the anger eliciting event using 27 positive and negative emotions. These emotions cover diverse motivational tendencies such as hostility, self-blame, social fears, and boldness/empowerment, and have been previously used to evaluate affective experiences in response to moral-relational violations (Razavi et al., 2022). Using these emotion items, I will investigate the differences in emotional experiences associated with the two anger variants. 
+
+_Analytic process:_ First, I will determine the structure of the affective experiences using dimensionality reduction analysis. 
+
+```{r}
+df_affect <- df1 %>% 
+                    select(ResponseId, Condition, starts_with("em_"))
+
+###Number of components will be decided based on scree plot, parallel analysis, and Velicor's MAP. If multiple alternative solutions are suggested by these methods, I will conduct PCA for all alternatives and choose the optimal factor solution based on component interpretability.
+
+  #scree plot
+  df_affect %>% 
+    select(starts_with("em_")) %>% 
+    psych::scree(hline = -1)
+  
+  #parallel analysis
+  df_affect %>% 
+    select(starts_with("em_")) %>% 
+    psych::fa.parallel()
+  
+  #Velicor's MAP
+  df_affect %>% 
+    select(starts_with("em_")) %>% 
+    psych::nfactors(n = 27)
+
+
+  #PCA with n components (n will be replaced based on the outcome of analyses above)
+  pca_n_component <- df_affect %>% 
+                        select(starts_with("em_")) %>%  
+                        psych::principal(., nfactors = n, rotate = "varimax") 
+        
+  n_comp_outcome <- psych::kaiser(pca_n_component, rotate = "Varimax") %>% psych::fa.sort()
+
+  n_comp_outcome[["loadings"]] %>% 
+                    knitr::kable(digits = 2) %>%
+                    kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+                    kableExtra::kable_paper(full_width = F)
+
+  #If there are cross-loading items (i.e., items that have high loadings on more than one component) in the PCA outcome, I will exclude such items one-by-one (starting with the ones that have the strongest cross-loading) until an interpretable solution without cross-loading is found. 
+
+```
+
+
+Next, I will create scale scores by averaging the corresponding items for each component. I will use these scores to compare the intensity of emotion categories between the two conditions. 
+
+_Note:_ Considering the data-driven nature of these analyses and the focus on discovery, I will follow Benjamin et al.'s (2018) recommendations to reduce the rate of false positives. Namely, the significance threshold will be set at _p_ < .005, and the analysis results with .05 > _p_s ≥ .005 will be reported as “suggestive”.
+
+```{r}
+
+#hypothetical scenario: code for calculating scale scores for 2 components
+  keys.list <- list(component1=c("...","...","...","..."),
+                    component2=c("...","...","...","..."))
+
+  affect_scores <- psych::scoreItems(keys.list, df_affect)
+  
+  affect_scores
+  
+  df_affect <- cbind(df_affect, affect_scores$scores)
+
+
+#hypothetical scenario: compare conditions for each of the 2 components
+  #component1
+    df_affect %>% 
+        t.test(component1 ~ Condition, data = .)
+    
+    df_affect %>% 
+        effectsize::cohens_d(component1 ~ Condition, data = .)
+
+  #component2
+    df_affect %>% 
+        t.test(component2 ~ Condition, data = .)
+    
+    df_affect %>% 
+        effectsize::cohens_d(component2 ~ Condition, data = .)
+```
+
+
+# Expressivity
+
+H: Participants are more likely to evaluate their own anger expression as “exaggerated” in the unjustified (vs. justified) anger condition.
+
+```{r}
+df1$behav_reac <- as.factor(df1$behav_reac)
+levels(df1$behav_reac) <- c("fully_concealed", "partly_concealed", "fully_expressed", "exaggerated")
+
+
+percentage(df1$behav_reac)
+
+# Comparing the reactions based on Condition
+  #cross-tabs
+    expressivity_table1 <- xtabs( ~ Condition + behav_reac,
+                               data=df1)
+    prop.table(expressivity_table1, 1) %>% 
+                                    round(2) 
+  #overall chi-square
+    chisq.test(df1$Condition, 
+               df1$behav_reac)
+
+  #If significant, follow-up analyses (the first one is predicted, the rest are exploratory):
+  df_exaggerated <- df1 %>% 
+                        mutate(exaggerated = if_else(behav_reac == "exaggerated", "Yes", "No")) %>% 
+                        select(Condition, exaggerated)
+    chisq.test(df_exaggerated$Condition, 
+               df_exaggerated$exaggerated)
+    
+  df_fully_expressed <- df1 %>% 
+                        mutate(fully_expressed = if_else(behav_reac == "fully_expressed", "Yes", "No")) %>% 
+                        select(Condition, fully_expressed)
+    chisq.test(df_fully_expressed$Condition, 
+               df_fully_expressed$fully_expressed)  
+    
+  df_partly_concealed <- df1 %>% 
+                        mutate(partly_concealed = if_else(behav_reac == "partly_concealed", "Yes", "No")) %>% 
+                        select(Condition, partly_concealed)
+    chisq.test(df_partly_concealed$Condition, 
+               df_partly_concealed$partly_concealed)
+    
+  df_fully_concealed <- df1 %>% 
+                        mutate(fully_concealed = if_else(behav_reac == "fully_concealed", "Yes", "No")) %>% 
+                        select(Condition, fully_concealed)
+    chisq.test(df_fully_concealed$Condition, 
+               df_fully_concealed$fully_concealed)
+    
+    
+  #graph (count)
+    ggplot(df1) +
+      aes(x = behav_reac, fill = Condition) +
+      geom_bar(position = "dodge") +
+      theme_minimal()
+
+    
+```
+
+
+H: The strength of the experience-expression relation tamps down as the anger intensity increases, and this deceleration is stronger for justified anger. 
+
+```{r}
+
+
+df_feel_exp <- df1 %>% 
+                select(ResponseId, Condition, anger_feel, anger_express) %>% 
+                mutate(anger_feel_c = as.double(scale(anger_feel, scale = FALSE)),
+                       anger_feel_c_sq = anger_feel_c^2)
+
+#A linear model testing the feel-express relation
+  mod1_linear <- lm(anger_express ~ anger_feel_c,
+                    data = df_feel_exp)
+  summary(mod1_linear)
+
+#A curvilinear model testing the feel-express relation: this is the test of the first part of the hypothesis. If the curvilinear relation is significant, the moderating role of Condition for this curvilinear relation will be tested, which will correspond to the second part of the hypothesis.  
+  mod1_nonlinear <- lm(anger_express ~ anger_feel_c * anger_feel_c_sq,
+                    data = df_feel_exp)
+  summary(mod1_nonlinear)
+  anova(mod1_linear, mod1_nonlinear)
+
+#Conditional on the previous model showing a significant curvilinear relation    
+  mod2_nonlinear <- lm(anger_express ~ anger_feel_c * anger_feel_c_sq * Condition,
+                    data = df_feel_exp)
+  summary(mod2_nonlinear)
+
+
+```
+
