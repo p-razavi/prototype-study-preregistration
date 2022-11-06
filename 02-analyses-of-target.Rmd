@@ -9,7 +9,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 #load libraries
-package_list <- c("dplyr", "tidyr", "lmerTest")
+package_list <- c("dplyr", "tidyr")
 lapply(package_list, require, character.only = TRUE)
 
 
@@ -108,7 +108,7 @@ Goodwin et al. (2014) demonstrate that judgments of morality and warmth are sepa
 df_moral_relational <- df1 %>% 
                     select(ResponseId, Condition, starts_with("gw_"))
 
-###Number of components will be decided based on scree plot, parallel analysis, and Velicor's MAP. If multiple options are suggested by these methods, I will conduct PCA for all options and make the decision about optimal factor solution based on component interpretability.
+###Number of components will be decided based on scree plot, parallel analysis, and Velicor's MAP. If multiple alternative solutions are suggested by these methods, I will conduct PCA for all alternatives and choose the optimal factor solution based on component interpretability.
 
   #scree plot
   df_moral_relational %>% 
@@ -123,7 +123,7 @@ df_moral_relational <- df1 %>%
   #Velicor's MAP
   df_moral_relational %>% 
     select(starts_with("gw_")) %>% 
-    psych::nfactors(n = 10)
+    psych::nfactors(n = 32)
 
 
   #PCA with n components (n will be replaced based on the outcome of analyses above)
@@ -143,6 +143,7 @@ df_moral_relational <- df1 %>%
 ```
 
 Based on the PCA results, I will create scale scores by averaging the corresponding items for each component. Next, I will compare the mean of emerging components between the two conditions.
+_Note:_ Considering the data-driven nature of these analyses and the focus on discovery, I will follow Benjamin et al.'s (2018) recommendations to reduce the rate of false positives. Namely, the significance threshold will be set at _p_ < .005, and the analysis results with .05 > _p_s ≥ .005 will be reported as “suggestive”.
 
 ```{r}
 
