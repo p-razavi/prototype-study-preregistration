@@ -1,0 +1,175 @@
+---
+title: "2. Perceptions of Target"
+author: "Pooya Razavi"
+date: "2022-11-05"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+#load libraries
+package_list <- c("dplyr", "tidyr", "lmerTest")
+lapply(package_list, require, character.only = TRUE)
+
+
+#read in the dataset
+df <- readxl::read_xlsx("preregistration_dataset.xlsx")
+
+#set up categorical variables
+df <- df %>% 
+          mutate(NarrativeWritten = as.factor(df$NarrativeWritten),
+                 NarrativeRelevant = as.factor(df$NarrativeRelevant),
+                 Condition = as.factor(df$Condition))
+
+#assigning values to factor levels
+  levels(df$NarrativeWritten) <- c("No", "Yes")
+
+  levels(df$NarrativeRelevant) <- c("No", "Yes", NA) 
+
+  levels(df$Condition) <- c("justified", "nonjustified", NA)
+
+#drop cases where condition = NA
+  df1 <- df %>% filter(!is.na(Condition))
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Causal Attribution
+
+H: In anger events that are perceived as justified (compared to the unjustified ones), participants are more likely to consider the cause of anger to stem from the target’s internal and stable characteristics (as opposed to the external and changeable circumstances).
+
+```{r}
+#first, test the correlation between the two items: 
+cor.test(df1$cause_circumst, df1$behave_same)
+
+#If r > .5, create a composite and compare conditions:
+    df1 <- df1 %>% 
+              mutate(causal_attr = ((cause_circumst + behave_same) / 2))
+    
+    df1 %>% 
+        t.test(causal_attr ~ Condition, data = .)
+    
+    df1 %>% 
+        effectsize::cohens_d(causal_attr ~ Condition, data = .)
+
+#If r < .5, compare conditions for each item:
+  #cause: internal vs. external 
+    df1 %>% 
+        t.test(cause_circumst ~ Condition, data = .)
+    
+    df1 %>% 
+        effectsize::cohens_d(cause_circumst ~ Condition, data = .)
+  
+  #cause: stable vs. the same 
+    df1 %>% 
+        t.test(behave_same ~ Condition, data = .)
+    
+    df1 %>% 
+        effectsize::cohens_d(behave_same ~ Condition, data = .)
+```
+
+# Moral Character
+
+H: In anger events perceived as justified (compared to the unjustified ones), the target is more likely to be seen as having weaker moral and ethical values. 
+
+```{r}
+#create the morality composite score using the items from Walker & Pitts (1998) 
+
+  df_morality <- df1 %>% 
+                    select(ResponseId, Condition, starts_with("wp_"), gw_honest, gw_principled)
+
+  keys.list <- list(highly_moral=c("wp_concerned_right","wp_faithful","wp_faithful","wp_clear_values",
+                                 "wp_lawabiding", "wp_strong_beliefs", "wp_distinguishes", "wp_dev_conscience",
+                                 "wp_ethical", "gw_honest"))
+
+  morality_scores <- psych::scoreItems(keys.list, df_morality)
+  
+  morality_scores
+  
+  df_morality <- cbind(df_morality, morality_scores$scores)
+
+
+#compare conditions
+    df_morality %>% 
+        t.test(highly_moral ~ Condition, data = .)
+    
+    df_morality %>% 
+        effectsize::cohens_d(highly_moral ~ Condition, data = .)
+
+
+```
+
+# Moral-Relational Character
+
+Goodwin et al. (2014) demonstrate that judgments of morality and warmth are separable and can provide unique informational value for person perception. To examine the perceptions of the target along these two critical dimensions, I will first conduct dimensionality reduction analysis on the character judgments from Goodwin et al. (2014). 
+
+```{r}
+df_moral_relational <- df1 %>% 
+                    select(ResponseId, Condition, starts_with("gw_"))
+
+###Number of components will be decided based on scree plot, parallel analysis, and Velicor's MAP. If multiple options are suggested by these methods, I will conduct PCA for all options and make the decision about optimal factor solution based on component interpretability.
+
+  #scree plot
+  df_moral_relational %>% 
+    select(starts_with("gw_")) %>% 
+    psych::scree(hline = -1)
+  
+  #parallel analysis
+  df_moral_relational %>% 
+    select(starts_with("gw_")) %>% 
+    psych::fa.parallel()
+  
+  #Velicor's MAP
+  df_moral_relational %>% 
+    select(starts_with("gw_")) %>% 
+    psych::nfactors(n = 10)
+
+
+  #PCA with n components (n will be replaced based on the outcome of analyses above)
+  pca_n_component <- df_moral_relational %>% 
+                        select(starts_with("gw_")) %>%  
+                        psych::principal(., nfactors = n, rotate = "varimax") 
+        
+  n_comp_outcome <- psych::kaiser(pca_n_component, rotate = "Varimax") %>% psych::fa.sort()
+
+  n_comp_outcome[["loadings"]] %>% 
+                    knitr::kable(digits = 2) %>%
+                    kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+                    kableExtra::kable_paper(full_width = F)
+
+  #If there are cross-loading items (i.e., items that have high loadings on more than one component) in the PCA outcome, I will exclude such items one-by-one (starting with the ones that have the strongest cross-loading) until an interpretable solution without cross-loading is found. 
+
+```
+
+Based on the PCA results, I will create scale scores by averaging the corresponding items for each component. Next, I will compare the mean of emerging components between the two conditions.
+
+```{r}
+
+#hypothetical scenario: code for calculating scale scores for 2 components
+  keys.list <- list(component1=c("...","...","...","..."),
+                    component2=c("...","...","...","..."))
+
+  moral_relation_scores <- psych::scoreItems(keys.list, df_moral_relational)
+  
+  moral_relation_scores
+  
+  df_moral_relational <- cbind(df_moral_relational, moral_relation_scores$scores)
+
+
+#hypothetical scenario: compare conditions for each of the 2 components
+  #component1
+    df_moral_relational %>% 
+        t.test(component1 ~ Condition, data = .)
+    
+    df_moral_relational %>% 
+        effectsize::cohens_d(component1 ~ Condition, data = .)
+
+  #component2
+    df_moral_relational %>% 
+        t.test(component2 ~ Condition, data = .)
+    
+    df_moral_relational %>% 
+        effectsize::cohens_d(component2 ~ Condition, data = .)
+```
+
