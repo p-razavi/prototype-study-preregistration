@@ -1,0 +1,110 @@
+---
+title: "04. Experiencer's Relational Processes"
+author: "Pooya Razavi"
+date: "2022-11-11"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+#load libraries
+package_list <- c("dplyr", "tidyr", "lmerTest")
+lapply(package_list, require, character.only = TRUE)
+
+
+#read in the dataset
+df <- readxl::read_xlsx("preregistration_dataset.xlsx")
+
+#set up categorical variables
+df <- df %>% 
+          mutate(NarrativeWritten = as.factor(df$NarrativeWritten),
+                 NarrativeRelevant = as.factor(df$NarrativeRelevant),
+                 Condition = as.factor(df$Condition))
+
+#assigning values to factor levels
+  levels(df$NarrativeWritten) <- c("No", "Yes")
+
+  levels(df$NarrativeRelevant) <- c("No", "Yes", NA) 
+
+  levels(df$Condition) <- c("justified", "nonjustified", NA)
+
+#drop cases where condition = NA
+  df1 <- df %>% filter(!is.na(Condition))
+  
+  
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Perception of Target's Regret
+
+Research question: Do the perceptions of the target as regretful and apologetic vary depending on whether they consider the anger event as justified or unjustified? 
+
+```{r}
+
+  #Regret 
+    df1 %>% 
+        t.test(person_regret ~ Condition, data = .)
+    
+    df1 %>% 
+        effectsize::cohens_d(person_regret ~ Condition, data = .)
+  
+  #Apology
+    df1 %>% 
+        t.test(person_apologize ~ Condition, data = .)
+    
+    df1 %>% 
+        effectsize::cohens_d(person_apologize ~ Condition, data = .)
+
+```
+
+# Relationship Closeness
+
+Hypothesis(a): Relationship closeness deteriorates following an anger event, both “short-term” (i.e., comparing closeness before and immediately after the event) and “long-term” (i.e., comparing closeness before the event and at the time of the study).
+
+```{r}
+closeness_df <- df1 %>% 
+                      select(ResponseId, Condition, prior_closeness, immed_closeness, now_closeness)
+
+#create a long dataframe
+closeness_df_long <- closeness_df %>% 
+                            tidyr::pivot_longer(cols = c(prior_closeness, immed_closeness, now_closeness),
+                                                names_to = "time",
+                                                values_to = "closeness") %>% 
+                            mutate(time = as.factor(time)) %>% 
+                            mutate(time = forcats::fct_relevel(time, "prior_closeness", "immed_closeness", "now_closeness"))
+                      
+  levels(closeness_df_long$time) <- c("prior", "immediate", "now")
+
+#setup the contrasts
+  contrasts(closeness_df_long$Condition) <- contr.sum
+  contrasts(closeness_df_long$time) <- contr.sum  
+
+#Overal model
+  closeness_model <- lmer(closeness ~ time * Condition + (1 | ResponseId),
+                          data = closeness_df_long)
+
+  anova(closeness_model, type = "III") %>% knitr::kable()
+
+#comparing closeness (a) before vs. immediately after the event 
+  pairwise_mod <- emmeans::emmeans(closeness_model, pairwise ~ time)
+  pairwise_mod[["contrasts"]][1]
+
+#comparing closeness (b) before vs. now
+  pairwise_mod[["contrasts"]][2]
+
+```
+
+Hypothesis(b): The long-term deterioration of relationship closeness is stronger for justified (vs. unjustified) anger experiences.
+
+```{r}
+longterm_mod <- emmeans::emmeans(closeness_model, pairwise ~ time | Condition)
+  
+  #justified: prior vs. now
+  longterm_mod[["contrasts"]][2]
+  #not justified: prior vs. now
+  longterm_mod[["contrasts"]][5]
+
+
+```
+
