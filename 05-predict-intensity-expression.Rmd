@@ -1,0 +1,153 @@
+---
+title: "05. Using multiple aspects of the anger event to predict the intensity of anger experience and expression"
+author: "Pooya Razavi"
+date: "2022-11-11"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+#load libraries
+package_list <- c("dplyr", "tidyr")
+lapply(package_list, require, character.only = TRUE)
+
+
+#read in the dataset
+df <- readxl::read_xlsx("preregistration_dataset.xlsx")
+
+#set up categorical variables
+df <- df %>% 
+          mutate(NarrativeWritten = as.factor(df$NarrativeWritten),
+                 NarrativeRelevant = as.factor(df$NarrativeRelevant),
+                 Condition = as.factor(df$Condition))
+
+#assigning values to factor levels
+  levels(df$NarrativeWritten) <- c("No", "Yes")
+
+  levels(df$NarrativeRelevant) <- c("No", "Yes", NA) 
+
+  levels(df$Condition) <- c("justified", "nonjustified", NA)
+
+#drop cases where condition = NA
+  df1 <- df %>% filter(!is.na(Condition))
+  
+  
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Anger Experience
+
+Research Question (a): What is the unique association between various characteristics of the anger eliciting event and person (i.e., perception of harm/threat to self and to others, perception of fairness, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger experience?
+
+```{r}
+#assuming items for each of these composits are strongly correlated (r > .5) 
+df1 <- df1 %>% 
+          mutate(fair_just = ((beh_fair + beh_justified) / 2),
+                 harm.threat_self = ((harm_you + threat_you) / 2),
+                  harm.threat_other = ((harm_others + threat_others) / 2),
+                 causal_attr = ((cause_circumst + behave_same) / 2)) 
+
+#If the items constituting each of the composits above do not meet the assumption of high correlation, they will be entered into the model individually (instead of being entered as a composit score).
+
+#reverse-scoring the norm items
+df1 <- df1 %>% 
+            mutate(injunctive = 6 - how_acceptable,
+                    descriptive = 6 - how_common)
+
+#testing for multicolinearity
+  #check the correlation matrix for r > .9
+    df1 %>% 
+      select(harm.threat_self, harm.threat_other, fair_just, 
+             person_regret, person_apologize, causal_attr, injunctive, descriptive, prior_closeness) %>% 
+      cor(use = "pairwise.complete.obs") %>% 
+      round(2)
+
+  #check for tolerance < .1 and VIFs > 5
+    feel_model <- lm(anger_feel ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness,
+                     data = df1)
+
+    olsrr::ols_vif_tol(feel_model)
+    
+  #if any of the three criteria above is violated, evaluate the model and address the issue by dropping predictor(s) that are problematic. If no multicolinearity issue is detected, proceed to interpreting the model.
+    
+    summary(feel_model)
+    
+```
+
+Research Question (b): To what extent do the predictors of anger intensity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+
+```{r}
+feel_model_interaction <- lm(anger_feel ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition + person_regret * Condition + person_apologize * Condition + causal_attr * Condition + injunctive * Condition + descriptive * Condition + prior_closeness * Condition,
+                     data = df1)
+
+  summary(feel_model_interaction)
+
+```
+
+# Anger Expression
+
+Research Question (a): What is the unique association between various characteristics of the anger eliciting event and person (i.e., perception of harm/threat to self and to others, perception of fairness, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger expression?
+
+```{r}
+#Note: Creating composit scores follows the same plan as explained in the previous section (i.e., Anger Experience)
+
+  #Testing for multicolinearity: check for tolerance < .1 and VIFs > 5
+    express_model <- lm(anger_express ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness,
+                     data = df1)
+
+    olsrr::ols_vif_tol(express_model)
+    
+  #if any of the multicolinearity criteria is violated, evaluate the model and address the issue by dropping predictor(s) that are problematic. If no multicolinearity issue is detected, proceed to interpreting the model.
+    
+    summary(express_model)
+    
+```
+
+Research Question (b): To what extent do the predictors of anger expressivity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+
+```{r}
+express_model_interaction <- lm(anger_express ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition + person_regret * Condition + person_apologize * Condition + causal_attr * Condition + injunctive * Condition + descriptive * Condition + prior_closeness * Condition,
+                     data = df1)
+
+  summary(express_model_interaction)
+
+```
+
+# Detecting Justified vs. Unjustified Anger
+
+Research Question: Of the various characteristics of the anger eliciting event and person (i.e., perception of harm/threat to self and to others, perception of fairness, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event), which ones can significantly classify anger events into justified vs. unjustified  anger?
+
+```{r}
+
+#run the training model
+logistic_model <- glm(Condition ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness, 
+             family = "binomial", data = df1)
+  #model summary
+    summary(logistic_model)
+
+  #McFadden’s R^2
+    pscl::pR2(logistic_model)["McFadden"]
+
+  #Variable importance
+    caret::varImp(logistic_model) %>% 
+      arrange(desc(Overall))
+  
+  #How did the model do?
+    predicted <- predict(logistic_model, df1, type = "response")
+    
+    df1$condition_numeric <- ifelse(df1$Condition == "justified", 0, 1)
+  
+  #confusion matrix [shows predictions compared to the actual defaults]
+    InformationValue::confusionMatrix(df1$condition_numeric, predicted)
+  #sensitivity (the “true positive rate”)
+    InformationValue::sensitivity(df1$condition_numeric, predicted)
+  #specificity (the “true negative rate”)
+    InformationValue::specificity(df1$condition_numeric, predicted)
+  #ROC  
+    InformationValue::plotROC(df1$condition_numeric, predicted)
+    
+
+```
+
