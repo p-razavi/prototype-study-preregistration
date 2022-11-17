@@ -312,3 +312,238 @@ _Note:_ Considering the data-driven nature of the analyses below, and the primar
     df_moral_relational %>% 
         effectsize::cohens_d(component2 ~ Condition, data = .)
 ```
+
+
+## Experiencer's Emotional Processes
+
+### Affective Experience
+
+*Research question:* What are the differences between justified vs. unjustified anger in terms of the intensity of affective experiences? <br>
+
+To compare the broader affective experiences of participants across the justified and unjustified anger events, participants are asked to rate their emotional experience during the anger eliciting event using 27 positive and negative emotions. These emotions cover diverse experiences such as hostility, self-blame, social fears, and boldness/empowerment, and have been previously used to evaluate affective experiences in response to moral-relational violations (Razavi et al., 2022). Using these emotion items, the differences in emotional experiences associated with the two anger variants will be examined. <br>
+
+First, the structure of the affective experiences will be determined using dimensionality reduction analysis (i.e., PCA). <br>
+
+The number of components will be decided based on the scree plot, parallel analysis, and Velicor's MAP. If multiple alternative solutions are suggested by these methods, PCA will be conducted for all the alternatives number of components, and the optimal solution will be chosen based on component interpretability. <br>
+
+```{r, affec-pca, eval=FALSE}
+df_affect <- df1 %>% 
+                    select(ResponseId, Condition, starts_with("em_"))
+
+  #scree plot
+  df_affect %>% 
+    select(starts_with("em_")) %>% 
+    psych::scree(hline = -1)
+  
+  #parallel analysis
+  df_affect %>% 
+    select(starts_with("em_")) %>% 
+    psych::fa.parallel()
+  
+  #Velicor's MAP
+  df_affect %>% 
+    select(starts_with("em_")) %>% 
+    psych::nfactors(n = 27)
+
+
+#PCA with n components (n will be replaced based on the outcome of analyses above)
+  pca_n_component <- df_affect %>% 
+                        select(starts_with("em_")) %>%  
+                        psych::principal(., nfactors = n, rotate = "varimax") 
+        
+  n_comp_outcome <- psych::kaiser(pca_n_component, rotate = "Varimax") %>% psych::fa.sort()
+
+  n_comp_outcome[["loadings"]] %>% 
+                    knitr::kable(digits = 2) %>%
+                    kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+                    kableExtra::kable_paper(full_width = F)
+
+  #If there are cross-loading items (i.e., items that have high loadings on more than one component) in the PCA outcome, in an iterative process, such items will be excluded one-by-one (starting with the ones that have the strongest cross-loading) and PCA will be conducted with the reduced number of items until an interpretable solution without cross-loading is found. 
+
+```
+
+Next, scale scores will be created by averaging the corresponding items for each component. These scores will be used to compare the intensity of emotion categories between the two conditions. 
+
+_Note:_ Considering the data-driven nature of these analyses and the focus on discovery, Benjamin et al.'s (2018) recommendations to reduce the rate of false positives will be followed. Namely, the significance threshold will be set at _p_ < .005, and the analysis results with .05 > _p_s ≥ .005 will be reported as “suggestive”.
+
+```{r, affect-compare, eval=FALSE}
+
+#Hypothetical scenario: code for calculating scale scores for 2 components
+  keys.list <- list(component1=c("...","...","...","..."),
+                    component2=c("...","...","...","..."))
+
+  affect_scores <- psych::scoreItems(keys.list, df_affect)
+  affect_scores
+  df_affect <- cbind(df_affect, affect_scores$scores)
+
+#hypothetical scenario: compare conditions for each of the 2 components
+  #component1
+    df_affect %>% 
+        t.test(component1 ~ Condition, data = .)
+    df_affect %>% 
+        effectsize::cohens_d(component1 ~ Condition, data = .)
+
+  #component2
+    df_affect %>% 
+        t.test(component2 ~ Condition, data = .)
+    df_affect %>% 
+        effectsize::cohens_d(component2 ~ Condition, data = .)
+```
+
+
+### Expressivity
+
+*Hypothesis 1:* Participants are more likely to evaluate their own anger expression as “exaggerated” in the unjustified (vs. justified) anger condition.
+
+```{r, exag-express, eval=FALSE}
+df1$behav_reac <- as.factor(df1$behav_reac)
+levels(df1$behav_reac) <- c("fully_concealed", "partly_concealed", "fully_expressed", "exaggerated")
+
+  #A function to calculate percentages for each category of a Factor variable
+    percentage <- function(var, includeNA = TRUE) {
+          tabb <- table(var) %>% as.data.frame()
+              if (includeNA == TRUE) {
+                   tabb$percentage <- (tabb$Freq * 100 / length(var))
+              } else {
+                    tabb$percentage <- (tabb$Freq * 100 / sum(tabb$Freq))
+              }
+          colnames(tabb)[1] <- c("category")
+          print(tabb)
+    }
+
+  percentage(df1$behav_reac)
+
+#Compare the reactions based on Condition
+  #cross-tabs
+    expressivity_table1 <- xtabs( ~ Condition + behav_reac,
+                               data=df1)
+    prop.table(expressivity_table1, 1) %>% 
+                                    round(2) 
+  #overall chi-square
+    chisq.test(df1$Condition, 
+               df1$behav_reac)
+
+  #If the overall chi-square is significant, conduct these follow-up analyses. Of these four analyses, the first one corresponds to the hypothesis (stated above), and the rest are exploratory:
+  df_exaggerated <- df1 %>% 
+                        mutate(exaggerated = if_else(behav_reac == "exaggerated", "Yes", "No")) %>% 
+                        select(Condition, exaggerated)
+    chisq.test(df_exaggerated$Condition, 
+               df_exaggerated$exaggerated)
+    
+  df_fully_expressed <- df1 %>% 
+                        mutate(fully_expressed = if_else(behav_reac == "fully_expressed", "Yes", "No")) %>% 
+                        select(Condition, fully_expressed)
+    chisq.test(df_fully_expressed$Condition, 
+               df_fully_expressed$fully_expressed)  
+    
+  df_partly_concealed <- df1 %>% 
+                        mutate(partly_concealed = if_else(behav_reac == "partly_concealed", "Yes", "No")) %>% 
+                        select(Condition, partly_concealed)
+    chisq.test(df_partly_concealed$Condition, 
+               df_partly_concealed$partly_concealed)
+    
+  df_fully_concealed <- df1 %>% 
+                        mutate(fully_concealed = if_else(behav_reac == "fully_concealed", "Yes", "No")) %>% 
+                        select(Condition, fully_concealed)
+    chisq.test(df_fully_concealed$Condition, 
+               df_fully_concealed$fully_concealed)
+    
+```
+
+
+*Hypothesis 2:* The strength of the experience-expression relation tamps down as the anger intensity increases, and this deceleration is stronger for justified anger. 
+
+```{r, feel-exp-relation, eval=FALSE}
+df_feel_exp <- df1 %>% 
+                select(ResponseId, Condition, anger_feel, anger_express) %>% 
+                mutate(anger_feel_c = as.double(scale(anger_feel, scale = FALSE)),
+                       anger_feel_c_sq = anger_feel_c^2)
+
+#A linear model testing the feel-express relation
+  mod1_linear <- lm(anger_express ~ anger_feel_c,
+                    data = df_feel_exp)
+  summary(mod1_linear)
+
+#A curvilinear model testing the feel-express relation: This is the test of the first part of the hypothesis. 
+ 
+  mod1_nonlinear <- lm(anger_express ~ anger_feel_c * anger_feel_c_sq,
+                    data = df_feel_exp)
+  summary(mod1_nonlinear)
+  anova(mod1_linear, mod1_nonlinear)
+
+#If the curvilinear relation is significant, the moderating role of Condition for this curvilinear relation will be tested, which will correspond to the second part of the hypothesis.   
+  mod2_nonlinear <- lm(anger_express ~ anger_feel_c * anger_feel_c_sq * Condition,
+                    data = df_feel_exp)
+  summary(mod2_nonlinear)
+
+```
+
+## Experiencer's Relational Processes
+
+### Perception of Target's Regret/Apology
+
+*Research question:* Do the perceptions of the target as regretful and apologetic vary depending on whether they consider the anger event as justified or unjustified? 
+
+```{r, regret-apol, eval=FALSE}
+  #Regret 
+    df1 %>% 
+        t.test(person_regret ~ Condition, data = .)
+    df1 %>% 
+        effectsize::cohens_d(person_regret ~ Condition, data = .)
+  
+  #Apology
+    df1 %>% 
+        t.test(person_apologize ~ Condition, data = .)
+    df1 %>% 
+        effectsize::cohens_d(person_apologize ~ Condition, data = .)
+
+```
+
+### Relationship Closeness
+
+*Hypothesis 1:* Relationship closeness deteriorates following an anger event, both “short-term” (i.e., comparing closeness before and immediately after the event) and “long-term” (i.e., comparing closeness before the event and at the time of the study).
+
+```{r closeness1, eval=FALSE}
+closeness_df <- df1 %>% 
+                      select(ResponseId, Condition, prior_closeness, immed_closeness, now_closeness)
+
+#create a long dataframe
+closeness_df_long <- closeness_df %>% 
+                            tidyr::pivot_longer(cols = c(prior_closeness, immed_closeness, now_closeness),
+                                                names_to = "time",
+                                                values_to = "closeness") %>% 
+                            mutate(time = as.factor(time)) %>% 
+                            mutate(time = forcats::fct_relevel(time, "prior_closeness", "immed_closeness", "now_closeness"))
+                      
+  levels(closeness_df_long$time) <- c("prior", "immediate", "now")
+
+#setup the contrasts
+  contrasts(closeness_df_long$Condition) <- contr.sum
+  contrasts(closeness_df_long$time) <- contr.sum  
+
+#Overal model
+  closeness_model <- lmer(closeness ~ time * Condition + (1 | ResponseId),
+                          data = closeness_df_long)
+
+  anova(closeness_model, type = "III") %>% knitr::kable()
+
+#comparing closeness (a) before vs. immediately after the event 
+  pairwise_mod <- emmeans::emmeans(closeness_model, pairwise ~ time)
+  pairwise_mod[["contrasts"]][1]
+
+#comparing closeness (b) before vs. now
+  pairwise_mod[["contrasts"]][2]
+
+```
+
+*Hypothesis 2:* The long-term deterioration of relationship closeness is stronger for justified (vs. unjustified) anger experiences.
+
+```{r, closeness2, eval=FALSE}
+longterm_mod <- emmeans::emmeans(closeness_model, pairwise ~ time | Condition)
+  
+  #justified: prior vs. now
+  longterm_mod[["contrasts"]][2]
+  #not justified: prior vs. now
+  longterm_mod[["contrasts"]][5]
+
+```
