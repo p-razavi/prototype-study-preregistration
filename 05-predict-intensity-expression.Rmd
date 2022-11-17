@@ -1,9 +1,13 @@
 ---
-title: "05. Using multiple aspects of the anger event to predict the intensity of anger experience and expression"
+title: 05. Using multiple aspects of the anger event to predict the intensity of anger
+  experience and expression, and the classification of anger types
 author: "Pooya Razavi"
 date: "2022-11-11"
-output: html_document
-editor_options: 
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -131,7 +135,7 @@ logistic_model <- glm(Condition ~ harm.threat_self + harm.threat_other + fair_ju
     pscl::pR2(logistic_model)["McFadden"]
 
   #Variable importance
-    caret::varImp(logistic_model) %>% 
+    caret::varImp(logistic_model, scale = FALSE) %>% 
       arrange(desc(Overall))
   
   #How did the model do?
