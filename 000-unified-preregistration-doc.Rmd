@@ -1,0 +1,181 @@
+---
+title: Preregistration of the Analyses for the Study on Justified vs. Unjustified
+  Anger Prototypes
+date: "`r Sys.Date()`"
+output:
+  word_document: 
+    reference_docx: word-output-template-use.docx
+  html_document: default
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+    highlight: yes
+editor_options:
+  chunk_output_type: console
+---
+
+# Study Procedure
+
+After providing consent, participants are randomly assigned to one of two conditions: justified and non-justified anger. First, they receive instructions to think about a time in the past that they experienced anger. Depending on the condition, they are directed to consider an experience where their anger was justified or unjustified.
+After recalling and writing about a past experience of anger, participants complete a series of questionnaires about the various aspects of their experience. The full instructions and measures, including the set of items relevant to these analyses are provided in a separate document.
+
+# Sample
+
+The data collection for this study started in September 2021, and is currently in progress. None of the following analyses have been tested on the actual dataset. The development and planning of the following hypotheses, research questions, and preregistered analyses are data-independent. These analyses will be conducted once the target sample size of 1054 is reached. 
+
+## Sample Size Determination
+
+Since the majority of analyses consist of comparisons of two independent samples, the target sample size was determined with the goal of achieving 90% power (with α = .05) to detect a small-to-moderate between-groups difference (i.e., Cohen’s *d* = 0.20; Lovakov & Agadullina, 2021). A priori power analysis using the *pwr* package in R (Champely, 2020) indicated that this goal can be achieved with a minimum sample size of 1054 participants. 
+
+## Data Exclusion
+
+Prior to the analyses, participants' anger narratives will be reviewed. Participant data will be excluded from further analyses if:
+* No anger narrative is provided.
+* The response provided does not follow the instructions. For example, instead of discussing a past experience of anger, the response refers to an irrelevant experience (e.g., a past experience of happiness) or the participant's personal theory about anger (e.g., "Anger is really bad.").
+* The response provides more than one experience, and it is not clear which one is the focal experience for which the participant has responded to the rest of the items.
+
+
+```{r data-exclusion, eval=FALSE}
+
+#set up categorical variables
+df <- df %>% 
+          mutate(NarrativeWritten = as.factor(df$NarrativeWritten),
+                 NarrativeRelevant = as.factor(df$NarrativeRelevant),
+                 Condition = as.factor(df$Condition))
+
+#assigning values to factor levels
+  levels(df$NarrativeWritten) <- c("No", "Yes")
+
+  levels(df$NarrativeRelevant) <- c("No", "Yes", NA) 
+
+  levels(df$Condition) <- c("justified", "nonjustified", NA)
+
+#drop cases based on exclusion criteria
+  df1 <- df %>% 
+    filter(NarrativeWritten == "Yes") %>% 
+    filter(NarrativeRelevant == "Yes") %>% 
+    filter(!is.na(Condition))
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Analyses Plan
+
+
+## Perceptions of the Target's Behavior: Harm and threat
+
+*Hypothesis 1:* Justified anger events (compared to the unjustified ones) involve a stronger perception of harm and threat to the self and to others.
+
+*Hypothesis 2:* The difference between justified and unjustified anger in terms of perceptions of harm or threat is moderated by the target of harm, such that this difference is larger for harm to others (vs. harm to self). 
+
+```{r, harm-threat, eval=FALSE}
+#First, examine the correlation between the 2 items for threat/harm to self and the 2 items for threat/harm to other. If r > .5, proceed with the following analyses (i.e., creating composite scores by averaging the 2 items for each variable). If not, conduct these analyses for each item separately.
+
+  cor.test(df1$harm_you, df1$threat_you) 
+  cor.test(df1$harm_others, df1$threat_others) 
+  
+#assuming items are strongly correlated (r > .5)
+
+  #create the dataframe
+  harm_threat_df <- df1 %>% 
+                        select(ResponseId, Condition, harm_you, harm_others, threat_you, threat_others) %>% 
+                        mutate(harm.threat_self = ((harm_you + threat_you) / 2),
+                               harm.threat_other = ((harm_others + threat_others) / 2))
+  
+  #create a long dataframe
+  harm_threat_df_long <- harm_threat_df %>% 
+                              tidyr::pivot_longer(cols = c(harm.threat_self, harm.threat_other),
+                                                  names_to = "target",
+                                                  names_prefix = "harm.threat_",
+                                                  values_to = "harm")
+
+#the model: 
+  #the main effect of type of anger (i.e., condition) corresponds to Hypothesis 1
+  #the interaction effect corresponds to Hypothesis 2
+  
+  harm_threat_df_long %>% 
+    rstatix::anova_test(data = .,
+                        dv = harm,
+                        wid = ResponseId,
+                        between = Condition,
+                        within = target) %>% 
+    rstatix::get_anova_table()
+
+
+#The difference between the two conditions in terms of harm/threat to self:
+  t.test(harm.threat_self ~ Condition, data = harm_threat_df)
+  effectsize::cohens_d(harm.threat_self ~ Condition, data = harm_threat_df)
+
+#The difference between the two conditions in terms of harm/threat to others:
+  t.test(harm.threat_other ~ Condition, data = harm_threat_df)
+  effectsize::cohens_d(harm.threat_other ~ Condition, data = harm_threat_df)
+
+```
+
+
+## Perceptions of the Target's Behavior: Fair and Justified
+
+*Hypothesis:* The target's behavior is perceived as less fair and less justifiable in the justified (vs. unjustified) anger condition.
+
+```{r, fair-justified, eval=FALSE}
+#First, examine the correlation between the 2 items. If r > .5, proceed with the following analyses. If not, conduct these analyses for each item separately.
+
+  cor.test(df1$beh_fair, df1$beh_justified) 
+
+#assuming items are strongly correlated (r > .5) 
+  df1 <- df1 %>% 
+            mutate(fair_just = ((beh_fair + beh_justified) / 2))
+  
+  df1 %>% 
+      t.test(fair_just ~ Condition, data = .)
+  
+  df1 %>% 
+      effectsize::cohens_d(fair_just ~ Condition, data = .)
+
+```
+
+## Perceptions of the Target's Behavior: Norm violations
+
+*Hypothesis 1:* The target’s behavior during justified anger events (vs. unjustified ones) is judged as a stronger norm violation. 
+
+*Hypothesis 2:* The difference between justified and unjustified anger events is moderated by the type of norm violation, such that this difference is larger for injunctive norms (compared to descriptive norms). 
+
+```{r, eval=FALSE}
+#create the dataframe
+    norms_df <- df1 %>% 
+                      select(ResponseId, Condition, how_acceptable, how_common) %>% 
+                      mutate(injunctive = 6 - how_acceptable,
+                             descriptive = 6 - how_common)
+                      
+                      
+
+#create a long dataframe
+    norms_df_long <- norms_df %>% 
+                            tidyr::pivot_longer(cols = c(injunctive, descriptive),
+                                                names_to = "norm_type",
+                                                values_to = "violation")
+
+#The model: 
+    #The main effect of type of anger (i.e., condition) corresponds to Hypothesis 1
+    #The interaction effect corresponds to Hypothesis 2
+    
+    norms_df_long %>% 
+      rstatix::anova_test(data = .,
+                          dv = violation,
+                          wid = ResponseId,
+                          between = Condition,
+                          within = norm_type) %>% 
+      rstatix::get_anova_table()
+
+
+#The difference between the two conditions in terms of injunctive norms
+    t.test(injunctive ~ Condition, data = norms_df)
+    effectsize::cohens_d(injunctive ~ Condition, data = norms_df)
+
+#The difference between the two conditions in terms of descriptive norms
+  t.test(descriptive ~ Condition, data = norms_df)
+  effectsize::cohens_d(descriptive ~ Condition, data = norms_df)
+
+```
+
