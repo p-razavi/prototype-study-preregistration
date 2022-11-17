@@ -4,15 +4,19 @@ title: Preregistration of the Analyses for the Study on Justified vs. Unjustifie
 date: "`r Sys.Date()`"
 output:
   word_document: 
-    reference_docx: word-output-template-use.docx
+    toc: yes
+    toc_depth: 3
+    reference_docx: word-doc-template.docx
   html_document: default
   pdf_document:
     toc: yes
-    toc_depth: 2
+    toc_depth: 3
     highlight: yes
 editor_options:
   chunk_output_type: console
 ---
+
+\newpage
 
 # Study Procedure
 
@@ -60,16 +64,16 @@ df <- df %>%
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Analyses Plan
+# Hypotheses, Research Questions, and Analyses Plan
 
 
 ## Perceptions of the Target's Behavior 
 
 ### Harm and threat
 
-*Hypothesis 1:* Justified anger events (compared to the unjustified ones) involve a stronger perception of harm and threat to the self and to others.
+**Hypothesis 1:** Justified anger events (compared to the unjustified ones) involve a stronger perception of harm and threat to the self and to others.
 
-*Hypothesis 2:* The difference between justified and unjustified anger in terms of perceptions of harm or threat is moderated by the target of harm, such that this difference is larger for harm to others (vs. harm to self). 
+**Hypothesis 2:** The difference between justified and unjustified anger in terms of perceptions of harm or threat is moderated by the target of harm, such that this difference is larger for harm to others (vs. harm to self). 
 
 ```{r, harm-threat, eval=FALSE}
 #First, examine the correlation between the 2 items for threat/harm to self and the 2 items for threat/harm to other. If r > .5, proceed with the following analyses (i.e., creating composite scores by averaging the 2 items for each variable). If not, conduct these analyses for each item separately.
@@ -118,7 +122,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Fairness and Justification
 
-*Hypothesis:* The target's behavior is perceived as less fair and less justifiable in the justified (vs. unjustified) anger condition.
+**Hypothesis:** The target's behavior is perceived as less fair and less justifiable in the justified (vs. unjustified) anger condition.
 
 ```{r, fair-justified, eval=FALSE}
 #First, examine the correlation between the 2 items. If r > .5, proceed with the following analyses. If not, conduct these analyses for each item separately.
@@ -139,9 +143,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Norm Violations
 
-*Hypothesis 1:* The target’s behavior during justified anger events (vs. unjustified ones) is judged as a stronger norm violation. 
+**Hypothesis 1:** The target’s behavior during justified anger events (vs. unjustified ones) is judged as a stronger norm violation. 
 
-*Hypothesis 2:* The difference between justified and unjustified anger events is moderated by the type of norm violation, such that this difference is larger for injunctive norms (compared to descriptive norms). 
+**Hypothesis 2:** The difference between justified and unjustified anger events is moderated by the type of norm violation, such that this difference is larger for injunctive norms (compared to descriptive norms). 
 
 ```{r, norms, eval=FALSE}
 #create the dataframe
@@ -185,7 +189,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Causal Attribution
 
-*Hypothesis:* In anger events that are perceived as justified (compared to the unjustified ones), participants are more likely to consider the cause of anger to stem from the target’s internal and stable characteristics (as opposed to the external and changeable circumstances).
+**Hypothesis:** In anger events that are perceived as justified (compared to the unjustified ones), participants are more likely to consider the cause of anger to stem from the target’s internal and stable characteristics (as opposed to the external and changeable circumstances).
 
 ```{r, causal-attr, eval=FALSE}
 #First, test the correlation between the two items: 
@@ -214,7 +218,7 @@ cor.test(df1$cause_circumst, df1$behave_same)
 
 ### Moral Character
 
-*Hypothesis:* In anger events perceived as justified (compared to the unjustified ones), the target is more likely to be seen as having weaker moral and ethical values. 
+**Hypothesis:** In anger events perceived as justified (compared to the unjustified ones), the target is more likely to be seen as having weaker moral and ethical values. 
 
 ```{r, moral-char, eval=FALSE}
 #create the morality composite score using the 10 items from Walker & Pitts (1998) 
@@ -240,7 +244,7 @@ cor.test(df1$cause_circumst, df1$behave_same)
 
 ### Moral-Relational Judgments
 
-*Research question:* What are the differences between justified vs. unjustified anger in terms of the moral-relational judgments of the target (as measured using Goodwin et al.'s [2014] trait characteristic items)? <br>
+**Research Question:** What are the differences between justified vs. unjustified anger in terms of the moral-relational judgments of the target (as measured using Goodwin et al.'s [2014] trait characteristic items)? <br>
 
 Goodwin et al. (2014) demonstrate that judgments of morality and warmth are separable and can provide unique informational value for person perception. To examine the perceptions of the target along these two critical dimensions, dimensionality reduction analysis (i.e., PCA) will be conducted on the character judgments from Goodwin et al. (2014). <br>
 
@@ -318,7 +322,7 @@ _Note:_ Considering the data-driven nature of the analyses below, and the primar
 
 ### Affective Experience
 
-*Research question:* What are the differences between justified vs. unjustified anger in terms of the intensity of affective experiences? <br>
+**Research Question:** What are the differences between justified vs. unjustified anger in terms of the intensity of affective experiences? <br>
 
 To compare the broader affective experiences of participants across the justified and unjustified anger events, participants are asked to rate their emotional experience during the anger eliciting event using 27 positive and negative emotions. These emotions cover diverse experiences such as hostility, self-blame, social fears, and boldness/empowerment, and have been previously used to evaluate affective experiences in response to moral-relational violations (Razavi et al., 2022). Using these emotion items, the differences in emotional experiences associated with the two anger variants will be examined. <br>
 
@@ -393,7 +397,7 @@ _Note:_ Considering the data-driven nature of these analyses and the focus on di
 
 ### Expressivity
 
-*Hypothesis 1:* Participants are more likely to evaluate their own anger expression as “exaggerated” in the unjustified (vs. justified) anger condition.
+**Hypothesis 1:** Participants are more likely to evaluate their own anger expression as “exaggerated” in the unjustified (vs. justified) anger condition.
 
 ```{r, exag-express, eval=FALSE}
 df1$behav_reac <- as.factor(df1$behav_reac)
@@ -451,7 +455,7 @@ levels(df1$behav_reac) <- c("fully_concealed", "partly_concealed", "fully_expres
 ```
 
 
-*Hypothesis 2:* The strength of the experience-expression relation tamps down as the anger intensity increases, and this deceleration is stronger for justified anger. 
+**Hypothesis 2:** The strength of the experience-expression relation tamps down as the anger intensity increases, and this deceleration is stronger for justified anger. 
 
 ```{r, feel-exp-relation, eval=FALSE}
 df_feel_exp <- df1 %>% 
@@ -482,7 +486,7 @@ df_feel_exp <- df1 %>%
 
 ### Perception of Target's Regret/Apology
 
-*Research question:* Do the perceptions of the target as regretful and apologetic vary depending on whether they consider the anger event as justified or unjustified? 
+**Research Question:** Do the perceptions of the target as regretful and apologetic vary depending on whether they consider the anger event as justified or unjustified? 
 
 ```{r, regret-apol, eval=FALSE}
   #Regret 
@@ -501,7 +505,7 @@ df_feel_exp <- df1 %>%
 
 ### Relationship Closeness
 
-*Hypothesis 1:* Relationship closeness deteriorates following an anger event, both “short-term” (i.e., comparing closeness before and immediately after the event) and “long-term” (i.e., comparing closeness before the event and at the time of the study).
+**Hypothesis 1:** Relationship closeness deteriorates following an anger event, both “short-term” (i.e., comparing closeness before and immediately after the event) and “long-term” (i.e., comparing closeness before the event and at the time of the study).
 
 ```{r closeness1, eval=FALSE}
 closeness_df <- df1 %>% 
@@ -536,7 +540,7 @@ closeness_df_long <- closeness_df %>%
 
 ```
 
-*Hypothesis 2:* The long-term deterioration of relationship closeness is stronger for justified (vs. unjustified) anger experiences.
+**Hypothesis 2:** The long-term deterioration of relationship closeness is stronger for justified (vs. unjustified) anger experiences.
 
 ```{r, closeness2, eval=FALSE}
 longterm_mod <- emmeans::emmeans(closeness_model, pairwise ~ time | Condition)
@@ -546,4 +550,115 @@ longterm_mod <- emmeans::emmeans(closeness_model, pairwise ~ time | Condition)
   #not justified: prior vs. now
   longterm_mod[["contrasts"]][5]
 
+```
+
+## Predictors of Anger Experience
+
+**Research Question 1:** What is the unique association between various characteristics of the anger eliciting event/person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger experience?
+
+```{r, pred-experience, eval=FALSE}
+#Assuming items for each of these composites are strongly correlated (r > .5), composite scores will be created by averaging: 
+df1 <- df1 %>% 
+          mutate(fair_just = ((beh_fair + beh_justified) / 2),
+                 harm.threat_self = ((harm_you + threat_you) / 2),
+                  harm.threat_other = ((harm_others + threat_others) / 2),
+                 causal_attr = ((cause_circumst + behave_same) / 2)) 
+
+  #If the items constituting each of the composites above do not meet the assumption of high correlation, they will be entered into the model individually (instead of being entered as a composite score).
+
+  #reverse-scoring the norm items
+  df1 <- df1 %>% 
+              mutate(injunctive = 6 - how_acceptable,
+                      descriptive = 6 - how_common)
+
+#Testing for multicolinearity
+  #check the correlation matrix for r > .9
+    df1 %>% 
+      select(harm.threat_self, harm.threat_other, fair_just, 
+             person_regret, person_apologize, causal_attr, injunctive, descriptive, prior_closeness) %>% 
+      cor(use = "pairwise.complete.obs") %>% 
+      round(2)
+
+  #check for tolerance < .1 and VIFs > 5
+    feel_model <- lm(anger_feel ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness,
+                     data = df1)
+
+    olsrr::ols_vif_tol(feel_model)
+    
+  #if any of the three criteria above is violated, evaluate the model and address the issue by dropping predictor(s) that are problematic. If no multicolinearity issue is detected, proceed to interpreting the model outcome:
+    
+    summary(feel_model)
+    
+```
+
+**Research Question 2:** To what extent do the predictors of anger intensity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+
+```{r, pred-experience-mod, eval=FALSE}
+feel_model_interaction <- lm(anger_feel ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition + person_regret * Condition + person_apologize * Condition + causal_attr * Condition + injunctive * Condition + descriptive * Condition + prior_closeness * Condition,
+                     data = df1)
+
+  summary(feel_model_interaction)
+
+```
+
+## Predictors of Anger Expression
+
+**Research Question 1:** What is the unique association between various characteristics of the anger eliciting event/person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger expression?
+
+```{r, pred-express, eval=FALSE}
+#Note: Creating composite scores will follow the same plan as explained in the previous section (i.e., Predictors of Anger Experience). The following models will be adjusted if/when the assumption of high correlation between composite items is not met.
+
+  #Testing for multicolinearity: check for tolerance < .1 and VIFs > 5
+    express_model <- lm(anger_express ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness,
+                     data = df1)
+
+    olsrr::ols_vif_tol(express_model)
+    
+  #If any of the multicolinearity criteria is violated, evaluate the model and address the issue by dropping predictor(s) that are problematic. If no multicolinearity issue is detected, proceed to interpreting the model outcome:
+    
+    summary(express_model)
+```
+
+**Research Question 2:** To what extent do the predictors of anger expressivity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+
+```{r, pred-express-mod, eval=FALSE}
+express_model_interaction <- lm(anger_express ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition + person_regret * Condition + person_apologize * Condition + causal_attr * Condition + injunctive * Condition + descriptive * Condition + prior_closeness * Condition,
+                     data = df1)
+
+  summary(express_model_interaction)
+
+```
+
+## Detecting Justified vs. Unjustified Anger
+
+**Research Question:** Of the various characteristics of the anger eliciting event and person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event), which ones are significant classifiers of anger events into justified vs. unjustified  categories?
+
+```{r classifi, eval=FALSE}
+
+logistic_model <- glm(Condition ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness, 
+             family = "binomial", data = df1)
+  #Model summary provides asnwer to the RQ above.
+    summary(logistic_model)
+
+#Additional analyses to descriptively examine the model performance and importance of the predictors    
+  #McFadden’s R^2
+    pscl::pR2(logistic_model)["McFadden"]
+
+  #Variable importance
+    caret::varImp(logistic_model, scale = FALSE) %>% 
+      arrange(desc(Overall))
+  
+  #How did the model do?
+    predicted <- predict(logistic_model, df1, type = "response")
+    
+    df1$condition_numeric <- ifelse(df1$Condition == "justified", 0, 1)
+  
+  #confusion matrix [shows predictions compared to the actual defaults]
+    InformationValue::confusionMatrix(df1$condition_numeric, predicted)
+  #sensitivity (the “true positive rate”)
+    InformationValue::sensitivity(df1$condition_numeric, predicted)
+  #specificity (the “true negative rate”)
+    InformationValue::specificity(df1$condition_numeric, predicted)
+  #ROC  
+    InformationValue::plotROC(df1$condition_numeric, predicted)
 ```
