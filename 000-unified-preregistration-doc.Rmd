@@ -20,11 +20,11 @@ editor_options:
 # Study Procedure
 
 After providing consent, participants are randomly assigned to one of two conditions: justified and non-justified anger. First, they receive instructions to think about a time in the past that they experienced anger. Depending on the condition, they are directed to consider an experience where their anger was justified or unjustified.
-After recalling and writing about a past experience of anger, participants complete a series of questionnaires about the various aspects of their experience. The full instructions and measures, including the set of items relevant to these analyses are provided in a separate document.
+After recalling and writing about a past experience of anger, participants complete a series of questionnaires about the various aspects of their experience. The full instructions and measures, including the set of items relevant to these analyses, are provided in a separate document titled *"Prototype Study of Justified and Unjustified Anger: Procedure and Materials."*
 
 # Sample
 
-The data collection for this study started in September 2021, and is currently in progress. None of the following analyses have been tested on the actual dataset. The development and planning of the following hypotheses, research questions, and preregistered analyses are data-independent. These analyses will be conducted once the target sample size of 1054 is reached. 
+The data collection for this study started in September 2021, and is currently in progress. None of the following analyses have been tested on the actual dataset. The development and planning of the following hypotheses, research questions, and preregistered analyses were independent of the data. These analyses will be conducted once the target sample size of 1054 is reached. 
 
 ## Sample Size Determination
 
