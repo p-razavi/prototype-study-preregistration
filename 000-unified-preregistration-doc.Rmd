@@ -1,6 +1,6 @@
 ---
-title: Preregistration of the Analyses for the Study on Justified vs. Unjustified
-  Anger Prototypes
+title: Preregistration for the Analyses of the Prototype Study of Justified vs. Unjustified
+  Anger
 date: "`r Sys.Date()`"
 output:
   word_document: 
@@ -16,7 +16,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-\newpage
 
 # Study Procedure
 
@@ -554,9 +553,11 @@ longterm_mod <- emmeans::emmeans(closeness_model, pairwise ~ time | Condition)
 
 ## Predictors of Anger Experience
 
-**Research Question 1:** What is the unique association between various characteristics of the anger eliciting event/person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger experience?
+### Incremental Association Beyond Harm/Threat
 
-```{r, pred-experience, eval=FALSE}
+**Research Question 1a:** What is the association between various characteristics of the anger eliciting event/person (i.e., perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger experience over and above perception of harm/threat (to self and to others)?
+
+```{r, increment-feel, eval=FALSE}
 #Assuming items for each of these composites are strongly correlated (r > .5), composite scores will be created by averaging: 
 df1 <- df1 %>% 
           mutate(fair_just = ((beh_fair + beh_justified) / 2),
@@ -570,6 +571,51 @@ df1 <- df1 %>%
   df1 <- df1 %>% 
               mutate(injunctive = 6 - how_acceptable,
                       descriptive = 6 - how_common)
+
+#A base model predicting anger experience from perceptions of harm/threat
+      experience_base_model <- lm(anger_feel ~ harm.threat_self + harm.threat_other,
+                     data = df1)
+      summary(experience_base_model)
+      
+#Testing the incremental associations (above and beyond harm/threat) for each of the other predictors separately. The two example code below represent models for the fairness/justification and perception of target's regret composites. Same will be done for all the predictors stated in the research question:
+      #fairness/justification
+      experience_inc_model_fairness <- lm(anger_feel ~ harm.threat_self + harm.threat_other + fair_just,
+                     data = df1)
+      summary(experience_inc_model_fairness)
+      
+      #perception of target's regret
+      experience_inc_model_regret <- lm(anger_feel ~ harm.threat_self + harm.threat_other + person_regret,
+                     data = df1)
+      summary(experience_inc_model_regret)
+      
+```
+
+**Research Question 1b:** To what extent do the predictors of anger intensity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+
+```{r, increment-feel2, eval=FALSE}
+#A base model predicting anger experience from perceptions of harm/threat X anger type
+      experience_int_model <- lm(anger_feel ~ harm.threat_self * Condition + harm.threat_other * Condition,
+                     data = df1)
+      summary(experience_int_model)
+
+#Testing the incremental associations (above and beyond harm/threat) for each of the other predictors interacting with the anger type. The two example code below represent models for the fairness/justification and perception of target's regret composites. Same will be done for all the predictors stated in the research question:
+      #fairness/justification
+      experience_int_inc_model_fairness <- lm(anger_feel ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition,
+                     data = df1)
+      summary(experience_int_inc_model_fairness)
+      
+      #perception of target's regret
+      experience_int_inc_model_regret <- lm(anger_feel ~ harm.threat_self * Condition + harm.threat_other * Condition + person_regret * Condition,
+                     data = df1)
+      summary(experience_int_inc_model_regret)
+```
+
+
+### Simultaneous Prediction
+
+**Research Question 2a:** What is the unique association between various characteristics of the anger eliciting event/person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger experience?
+
+```{r, pred-experience, eval=FALSE}
 
 #Testing for multicolinearity
   #check the correlation matrix for r > .9
@@ -591,7 +637,7 @@ df1 <- df1 %>%
     
 ```
 
-**Research Question 2:** To what extent do the predictors of anger intensity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+**Research Question 2b:** To what extent do the predictors of anger intensity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
 
 ```{r, pred-experience-mod, eval=FALSE}
 feel_model_interaction <- lm(anger_feel ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition + person_regret * Condition + person_apologize * Condition + causal_attr * Condition + injunctive * Condition + descriptive * Condition + prior_closeness * Condition,
@@ -603,10 +649,57 @@ feel_model_interaction <- lm(anger_feel ~ harm.threat_self * Condition + harm.th
 
 ## Predictors of Anger Expression
 
-**Research Question 1:** What is the unique association between various characteristics of the anger eliciting event/person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger expression?
+### Incremental Association Beyond Harm/Threat
+
+**Research Question 1a:** What is the association between various characteristics of the anger eliciting event/person (i.e., perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger expression over and above perception of harm/threat (to self and to others)?
+
+```{r, increment-express, eval=FALSE}
+#Note: Creating composite scores will follow the same plan as explained in the previous section (i.e., Predictors of Anger Experience). The following models will be adjusted if/when the assumption of high correlation between composite items is not met.
+
+#A base model predicting anger expression from perceptions of harm/threat
+      expression_base_model <- lm(anger_express ~ harm.threat_self + harm.threat_other,
+                     data = df1)
+      summary(expression_base_model)
+      
+#Testing the incremental associations (above and beyond harm/threat) for each of the other predictors separately. The two example code below represent models for the fairness/justification and perception of target's regret composites. Same will be done for all the predictors stated in the research question:
+      #fairness/justification
+      expression_inc_model_fairness <- lm(anger_express ~ harm.threat_self + harm.threat_other + fair_just,
+                     data = df1)
+      summary(expression_inc_model_fairness)
+      
+      #perception of target's regret
+      expression_inc_model_regret <- lm(anger_express ~ harm.threat_self + harm.threat_other + person_regret,
+                     data = df1)
+      summary(expression_inc_model_regret)
+      
+```
+
+**Research Question 1b:** To what extent do the predictors of anger expression (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+
+```{r, increment-express2, eval=FALSE}
+#A base model predicting anger expression from perceptions of harm/threat X anger type
+      expression_int_model <- lm(anger_express ~ harm.threat_self * Condition + harm.threat_other * Condition,
+                     data = df1)
+      summary(expression_int_model)
+
+#Testing the incremental associations (above and beyond harm/threat) for each of the other predictors interacting with the anger type. The two example code below represent models for the fairness/justification and perception of target's regret composites. Same will be done for all the predictors stated in the research question:
+      #fairness/justification
+      expression_int_inc_model_fairness <- lm(anger_express ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition,
+                     data = df1)
+      summary(expression_int_inc_model_fairness)
+      
+      #perception of target's regret
+      expression_int_inc_model_regret <- lm(anger_express ~ harm.threat_self * Condition + harm.threat_other * Condition + person_regret * Condition,
+                     data = df1)
+      summary(expression_int_inc_model_regret)
+```
+
+
+### Simultaneous Prediction
+
+**Research Question 2a:** What is the unique association between various characteristics of the anger eliciting event/person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event) and participants’ anger expression?
 
 ```{r, pred-express, eval=FALSE}
-#Note: Creating composite scores will follow the same plan as explained in the previous section (i.e., Predictors of Anger Experience). The following models will be adjusted if/when the assumption of high correlation between composite items is not met.
 
   #Testing for multicolinearity: check for tolerance < .1 and VIFs > 5
     express_model <- lm(anger_express ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness,
@@ -619,7 +712,7 @@ feel_model_interaction <- lm(anger_feel ~ harm.threat_self * Condition + harm.th
     summary(express_model)
 ```
 
-**Research Question 2:** To what extent do the predictors of anger expressivity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
+**Research Question 2b:** To what extent do the predictors of anger expressivity (based on the model above) vary depending on whether the anger event is perceived as justified or unjustified?
 
 ```{r, pred-express-mod, eval=FALSE}
 express_model_interaction <- lm(anger_express ~ harm.threat_self * Condition + harm.threat_other * Condition + fair_just * Condition + person_regret * Condition + person_apologize * Condition + causal_attr * Condition + injunctive * Condition + descriptive * Condition + prior_closeness * Condition,
@@ -629,36 +722,4 @@ express_model_interaction <- lm(anger_express ~ harm.threat_self * Condition + h
 
 ```
 
-## Detecting Justified vs. Unjustified Anger
 
-**Research Question:** Of the various characteristics of the anger eliciting event and person (i.e., perception of harm/threat to self and to others, perception of fairness/justification, perception of target’s regret, perception of target's tendency to apologize, causal attributions, norm violations, relationship closeness prior to the event), which ones are significant classifiers of anger events into justified vs. unjustified  categories?
-
-```{r classifi, eval=FALSE}
-
-logistic_model <- glm(Condition ~ harm.threat_self + harm.threat_other + fair_just + person_regret + person_apologize + causal_attr + injunctive + descriptive + prior_closeness, 
-             family = "binomial", data = df1)
-  #Model summary provides asnwer to the RQ above.
-    summary(logistic_model)
-
-#Additional analyses to descriptively examine the model performance and importance of the predictors    
-  #McFadden’s R^2
-    pscl::pR2(logistic_model)["McFadden"]
-
-  #Variable importance
-    caret::varImp(logistic_model, scale = FALSE) %>% 
-      arrange(desc(Overall))
-  
-  #How did the model do?
-    predicted <- predict(logistic_model, df1, type = "response")
-    
-    df1$condition_numeric <- ifelse(df1$Condition == "justified", 0, 1)
-  
-  #confusion matrix [shows predictions compared to the actual defaults]
-    InformationValue::confusionMatrix(df1$condition_numeric, predicted)
-  #sensitivity (the “true positive rate”)
-    InformationValue::sensitivity(df1$condition_numeric, predicted)
-  #specificity (the “true negative rate”)
-    InformationValue::specificity(df1$condition_numeric, predicted)
-  #ROC  
-    InformationValue::plotROC(df1$condition_numeric, predicted)
-```
